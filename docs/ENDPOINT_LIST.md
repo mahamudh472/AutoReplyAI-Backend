@@ -16,6 +16,16 @@ This index lists available API endpoints and links to the per-app reference page
 - [GET  /api/v1/accounts/profile/](endpoints/accounts.md) — Get current user's profile (authenticated)
 - [PATCH /api/v1/accounts/profile/update/](endpoints/accounts.md) — Partial update profile (authenticated)
 
+### Integrations
+
+- [GET /api/v1/integrations/](endpoints/integrations.md) — List all user integration connections (authenticated)
+- [POST /api/v1/integrations/](endpoints/integrations.md) — Connect a Facebook Page, Instagram, or WhatsApp Business account (authenticated)
+- [GET /api/v1/integrations/<uuid:id>/](endpoints/integrations.md) — Get details of a specific integration connection (authenticated)
+- [PATCH /api/v1/integrations/<uuid:id>/](endpoints/integrations.md) — Update an integration connection (authenticated)
+- [DELETE /api/v1/integrations/<uuid:id>/](endpoints/integrations.md) — Delete an integration connection (authenticated)
+- [POST /api/v1/integrations/<uuid:id>/send-message/](endpoints/integrations.md) — Send a message on behalf of the integration (authenticated)
+- [GET /api/v1/integrations/logs/](endpoints/integrations.md) — View message dispatch history logs (authenticated)
+
 ---
 
 Add other apps here as their endpoint pages are created under `docs/endpoints/`.
