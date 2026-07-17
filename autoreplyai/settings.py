@@ -201,5 +201,11 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
+# Meta OAuth Settings
+META_CLIENT_ID = os.getenv("META_CLIENT_ID", "")
+META_CLIENT_SECRET = os.getenv("META_CLIENT_SECRET", "")
+META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "")
+META_FRONTEND_REDIRECT_URL = os.getenv("META_FRONTEND_REDIRECT_URL", "")
+
 # unfold config (modify the configs/unfold_conf.py file config for this project then uncomment the next line)
 # from .configs.unfold_conf import UNFOLD

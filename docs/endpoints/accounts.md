@@ -61,8 +61,13 @@ Request JSON:
 
 Success response (200):
 
+- When email verified successfully:
 ```json
 { "message": "Email jane@example.com successfully verified" }
+```
+- When email was already verified:
+```json
+{ "message": "Email jane@example.com is already verified" }
 ```
 
 Error responses:
@@ -111,8 +116,12 @@ Error examples:
 - 400 when account not active (OTP sent):
 ```json
 {
-  "detail": "Account is not active. An OTP has been sent to your email for verification.",
-  "code": "EMAIL_NOT_VERIFIED"
+  "detail": [
+    "Account is not active. An OTP has been sent to your email for verification."
+  ],
+  "code": [
+    "EMAIL_NOT_VERIFIED"
+  ]
 }
 ```
 
@@ -156,10 +165,29 @@ Header:
 
 - `Authorization: Bearer <access_token>`
 
+Request JSON:
+
+```json
+{
+  "refresh_token": "<refresh_token>"
+}
+```
+
 Success response (205):
 
 ```json
 { "message": "Successfully logged out" }
+```
+
+Error responses:
+
+- 400: Refresh token is missing
+```json
+{ "error": "Refresh token is required" }
+```
+- 400: Refresh token is invalid or expired
+```json
+{ "error": "Token is invalid or expired" }
 ```
 
 ---
@@ -282,10 +310,22 @@ Success (200) example:
 
 ```json
 {
-  "id": 12,
-  "full_name": "Jane Example",
+  "id": "2b6fae74-cce8-4f85-9cd1-0f1a1640d4c9",
+  "is_superuser": false,
   "email": "jane@example.com",
-  "is_active": true
+  "username": null,
+  "full_name": "Jane Example",
+  "phone_number": null,
+  "avatar": null,
+  "gender": null,
+  "age": null,
+  "date_of_birth": null,
+  "joined_at": "2026-07-17T09:07:05Z",
+  "last_login": null,
+  "is_active": true,
+  "is_staff": false,
+  "groups": [],
+  "user_permissions": []
 }
 ```
 

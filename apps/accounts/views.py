@@ -181,7 +181,9 @@ class LogoutView(GenericAPIView):
     
     def post(self, request):
         try:
-            handle_logout(request)
+            response = handle_logout(request)
+            if response:
+                return response
             return Response(
                 {"message": "Successfully logged out"},
                 status=status.HTTP_205_RESET_CONTENT

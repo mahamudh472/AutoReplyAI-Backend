@@ -1,10 +1,13 @@
 from django.urls import reverse
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
+from django.core import signing
+from django.utils import timezone
 from unittest.mock import patch, MagicMock
 from urllib.error import HTTPError
-from ..models import Integration, MessageLog
+from ..models import Integration, MessageLog, MetaUserToken
 from common.enums import PlatformChoice
 import io
 
@@ -131,3 +134,101 @@ class IntegrationAPITests(APITestCase):
         self.assertIsNotNone(log)
         self.assertEqual(log.status, "failed")
         self.assertEqual(log.error_message, "Invalid OAuth access token.")
+
+
+class MetaConnectAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="user1@example.com",
+            password="testpassword123",
+            full_name="User One"
+        )
+        self.client.force_authenticate(user=self.user)
+
+    @override_settings(META_CLIENT_ID="test-client-id", META_REDIRECT_URI="http://test-redirect-uri")
+    def test_meta_connect_url_generation(self):
+        url = reverse("meta_connect")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("authorization_url", response.data)
+        auth_url = response.data["authorization_url"]
+        self.assertIn("client_id=test-client-id", auth_url)
+        self.assertIn("redirect_uri=http%3A%2F%2Ftest-redirect-uri", auth_url)
+        self.assertIn("state=", auth_url)
+
+    @override_settings(META_FRONTEND_REDIRECT_URL="http://test-frontend")
+    @patch("apps.integrations.services.meta_auth_service.MetaAuthService.get_user_access_token")
+    def test_meta_callback_success(self, mock_get_token):
+        mock_get_token.return_value = {
+            "access_token": "long-lived-user-token",
+            "expires_in": 5183999
+        }
+        
+        # Generate valid state
+        state = signing.dumps({"user_id": str(self.user.id)})
+        url = f"{reverse('meta_callback')}?code=auth-code-123&state={state}"
+        
+        response = self.client.get(url)
+        # Should redirect to frontend
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(response.url.startswith("http://test-frontend?success=true"))
+        
+        # Verify db entry
+        token_entry = MetaUserToken.objects.get(user=self.user)
+        self.assertEqual(token_entry.access_token, "long-lived-user-token")
+        self.assertIsNotNone(token_entry.expires_at)
+
+    @override_settings(META_FRONTEND_REDIRECT_URL="http://test-frontend")
+    def test_meta_callback_invalid_state(self):
+        url = f"{reverse('meta_callback')}?code=auth-code-123&state=invalidstate"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(response.url.startswith("http://test-frontend?error=invalid_state"))
+
+    @patch("apps.integrations.services.meta_auth_service.MetaAuthService.get_user_pages")
+    def test_meta_pages_list(self, mock_get_pages):
+        mock_get_pages.return_value = [
+            {"id": "page-1", "name": "FB Page 1", "category": "Tech", "access_token": "page-tok-1", "tasks": ["MANAGE"]},
+            {"id": "page-2", "name": "FB Page 2", "category": "Art", "access_token": "page-tok-2", "tasks": ["MESSAGING"]}
+        ]
+        
+        # Set token in db
+        MetaUserToken.objects.create(
+            user=self.user,
+            access_token="valid-token",
+            expires_at=timezone.now() + timezone.timedelta(days=1)
+        )
+        
+        url = reverse("meta_pages")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]["id"], "page-1")
+        self.assertEqual(response.data[0]["name"], "FB Page 1")
+        # Ensure access token is NOT exposed
+        self.assertNotIn("access_token", response.data[0])
+
+    @patch("apps.integrations.services.meta_auth_service.MetaAuthService.get_user_pages")
+    def test_meta_select_page(self, mock_get_pages):
+        mock_get_pages.return_value = [
+            {"id": "page-1", "name": "FB Page 1", "category": "Tech", "access_token": "page-tok-1", "tasks": ["MANAGE"]}
+        ]
+        
+        MetaUserToken.objects.create(
+            user=self.user,
+            access_token="valid-token",
+            expires_at=timezone.now() + timezone.timedelta(days=1)
+        )
+        
+        url = reverse("meta_select_page")
+        response = self.client.post(url, {"page_id": "page-1"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["platform_identifier"], "page-1")
+        self.assertEqual(response.data["name"], "FB Page 1")
+        
+        # Verify saved in integration db
+        integration = Integration.objects.get(user=self.user, platform=PlatformChoice.FACEBOOK_PAGE)
+        self.assertEqual(integration.access_token, "page-tok-1")
+        self.assertEqual(integration.platform_identifier, "page-1")
+        self.assertEqual(integration.additional_data, {"category": "Tech", "tasks": ["MANAGE"]})
+

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Integration, MessageLog
+from .models import Integration, MessageLog, MetaUserToken
 
 @admin.register(Integration)
 class IntegrationAdmin(ModelAdmin):
@@ -39,3 +39,7 @@ class MessageLogAdmin(ModelAdmin):
             "fields": ("error_message", "created_at")
         }),
     )
+
+@admin.register(MetaUserToken)
+class MetaUserTokenAdmin(ModelAdmin):
+    pass

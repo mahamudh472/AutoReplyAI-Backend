@@ -113,3 +113,30 @@ class MessageLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.integration.platform} to {self.recipient_id} ({self.status}) - {self.created_at}"
+
+
+class MetaUserToken(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="meta_user_token"
+    )
+    access_token = models.TextField(
+        help_text="The long-lived user access token for Facebook Graph API"
+    )
+    expires_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="The expiration time of the user access token"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "meta_user_tokens"
+        verbose_name = "Meta User Token"
+        verbose_name_plural = "Meta User Tokens"
+
+    def __str__(self) -> str:
+        return f"{self.user.email} - Meta Token"
+
