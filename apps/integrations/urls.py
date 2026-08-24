@@ -10,4 +10,6 @@ urlpatterns = [
     path("meta/callback/", views.MetaCallbackView.as_view(), name="meta_callback"),
     path("meta/pages/", views.MetaPagesListView.as_view(), name="meta_pages"),
     path("meta/select-page/", views.MetaSelectPageView.as_view(), name="meta_select_page"),
+    path("meta/webhook/", views.MetaWebhookView.as_view(), name="meta_webhook"),
+    path("webhook/", views.MetaWebhookView.as_view(), name="webhook"),
 ]

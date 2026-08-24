@@ -13,60 +13,83 @@ from .serializers import IntegrationSerializer, MessageLogSerializer
 from .services.message_service import MetaMessageService
 from typing import Any, Dict
 
+import logging
 import urllib.parse
 from django.conf import settings
 from django.core import signing
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
+from common.enums import PlatformChoice
 from .services.meta_auth_service import MetaAuthService, MetaAuthError
+from .services.meta_webhook_service import MetaWebhookService
+
+from apps.organizations.services import get_user_organization
+
+logger = logging.getLogger(__name__)
 
 
 class IntegrationListCreateView(ListCreateAPIView):
     """
-    List integrations or create a new integration connection.
+    List integrations or create a new integration connection under the user's organization.
     """
     serializer_class = IntegrationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Only return integrations belonging to the authenticated user
-        return Integration.objects.filter(user=self.request.user)
+        # Return integrations belonging to the user's organization(s)
+        return Integration.objects.filter(organization__members__user=self.request.user).distinct()
+
+    def perform_create(self, serializer):
+        org = get_user_organization(self.request.user)
+        integration = serializer.save(user=self.request.user, organization=org)
+        if integration.platform == PlatformChoice.FACEBOOK_PAGE and integration.access_token:
+            try:
+                MetaAuthService.subscribe_page_to_app(integration.platform_identifier, integration.access_token)
+            except Exception as e:
+                logger.warning("Could not automatically subscribe page %s to webhook: %s", integration.platform_identifier, str(e))
 
 
 class IntegrationDetailView(RetrieveUpdateDestroyAPIView):
     """
-    Retrieve, update, or delete an integration connection.
+    Retrieve, update, or delete an integration connection under the user's organization.
     """
     serializer_class = IntegrationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Prevent accessing other users' integrations
-        return Integration.objects.filter(user=self.request.user)
+        return Integration.objects.filter(organization__members__user=self.request.user).distinct()
+
+    def perform_destroy(self, instance):
+        if instance.platform == PlatformChoice.FACEBOOK_PAGE and instance.access_token:
+            try:
+                MetaAuthService.unsubscribe_page_from_app(instance.platform_identifier, instance.access_token)
+            except Exception as e:
+                logger.warning("Could not unsubscribe page %s from webhook: %s", instance.platform_identifier, str(e))
+        super().perform_destroy(instance)
+
 
 
 class MessageLogListView(ListAPIView):
     """
-    List history/logs of messages sent through user integrations.
+    List history/logs of messages sent through organization integrations.
     """
     serializer_class = MessageLogSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Filter logs for integrations belonging to the current user
-        return MessageLog.objects.filter(integration__user=self.request.user)
+        return MessageLog.objects.filter(integration__organization__members__user=self.request.user).distinct()
 
 
 class IntegrationSendMessageView(GenericAPIView):
     """
-    Send a message through a specific integration on behalf of the user.
+    Send a message through a specific integration on behalf of the user/organization.
     """
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Integration.objects.filter(user=self.request.user)
+        return Integration.objects.filter(organization__members__user=self.request.user).distinct()
 
     def post(self, request, pk=None) -> Response:
         integration = get_object_or_404(self.get_queryset(), pk=pk)
@@ -303,11 +326,13 @@ class MetaSelectPageView(APIView):
 
         # Save/update the Integration in db
         from common.enums import PlatformChoice
+        org = get_user_organization(request.user)
         integration, created = Integration.objects.update_or_create(
-            user=request.user,
+            organization=org,
             platform=PlatformChoice.FACEBOOK_PAGE,
             platform_identifier=str(page_id),
             defaults={
+                "user": request.user,
                 "name": page_name,
                 "access_token": page_access_token,
                 "is_active": True,
@@ -318,6 +343,59 @@ class MetaSelectPageView(APIView):
             }
         )
 
+        # Automatically subscribe page to app webhooks for messaging
+        try:
+            MetaAuthService.subscribe_page_to_app(str(page_id), page_access_token)
+        except Exception as e:
+            logger.warning("Could not automatically subscribe page %s to webhook: %s", page_id, str(e))
+
         serializer = IntegrationSerializer(integration)
         return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+
+
+class MetaWebhookView(APIView):
+    """
+    Webhook endpoint for Meta (Facebook Messenger, Instagram DMs, WhatsApp Business).
+    
+    GET /api/v1/integrations/meta/webhook/
+      - Webhook verification handshake: checks hub.mode and hub.verify_token,
+        returns hub.challenge.
+        
+    POST /api/v1/integrations/meta/webhook/
+      - Receives incoming messaging events, parses user messages, and sends
+        a static automated response back.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request) -> HttpResponse:
+        hub_mode = request.query_params.get("hub.mode") or request.GET.get("hub.mode")
+        hub_verify_token = request.query_params.get("hub.verify_token") or request.GET.get("hub.verify_token")
+        hub_challenge = request.query_params.get("hub.challenge") or request.GET.get("hub.challenge")
+
+        is_valid, response_text = MetaWebhookService.verify_token(
+            mode=hub_mode,
+            token=hub_verify_token,
+            challenge=hub_challenge
+        )
+
+        if is_valid:
+            return HttpResponse(response_text, content_type="text/plain", status=status.HTTP_200_OK)
+        else:
+            return HttpResponse(response_text, content_type="text/plain", status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request) -> Response:
+        # Validate signature if provided
+        signature = request.headers.get("X-Hub-Signature-256") or request.META.get("HTTP_X_HUB_SIGNATURE_256")
+        if signature:
+            if not MetaWebhookService.verify_signature(request.body, signature):
+                return HttpResponseForbidden("Invalid webhook signature.")
+
+        # Process the incoming webhook payload and reply
+        results = MetaWebhookService.process_webhook_payload(request.data)
+
+        return Response({
+            "status": "EVENT_RECEIVED",
+            "processed": results
+        }, status=status.HTTP_200_OK)
+
 

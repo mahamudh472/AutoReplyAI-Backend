@@ -212,3 +212,78 @@ Success response (200):
   }
 ]
 ```
+
+---
+
+## GET /api/v1/integrations/meta/webhook/
+
+Description: Meta Webhook verification handshake endpoint. Meta sends `hub.mode`, `hub.verify_token`, and `hub.challenge` query parameters when subscribing.
+
+Auth: None (Public / Meta Verified)
+
+Query Parameters:
+- `hub.mode`: `subscribe`
+- `hub.verify_token`: Verification token matching `META_WEBHOOK_VERIFY_TOKEN` setting
+- `hub.challenge`: Random challenge string sent by Meta
+
+Success response (200): Plain text containing the `hub.challenge` string.
+
+Error response (403): Plain text error if `hub.verify_token` or `hub.mode` does not match.
+
+---
+
+## POST /api/v1/integrations/meta/webhook/
+
+Description: Receives webhook event notifications from Meta (Facebook Messenger, Instagram Messaging, WhatsApp Business), processes incoming user messages, and sends a static automated reply.
+
+Auth: None (Public / Meta Signature validation via `X-Hub-Signature-256`)
+
+Payload (Example Facebook Page Event):
+
+```json
+{
+  "object": "page",
+  "entry": [
+    {
+      "id": "104928374829103",
+      "time": 1458692752478,
+      "messaging": [
+        {
+          "sender": {
+            "id": "1254459154682919"
+          },
+          "recipient": {
+            "id": "104928374829103"
+          },
+          "timestamp": 1458692752478,
+          "message": {
+            "mid": "mid.1458696618141:b4ef9d19ec21086067",
+            "text": "Hello, is anyone available?"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Success response (200):
+
+```json
+{
+  "status": "EVENT_RECEIVED",
+  "processed": [
+    {
+      "status": "replied",
+      "integration_id": "a3b4c5d6-e7f8-9012-3456-7890abcdef12",
+      "platform": "FACEBOOK_PAGE",
+      "sender_id": "1254459154682919",
+      "incoming_message_id": "mid.1458696618141:b4ef9d19ec21086067",
+      "incoming_text": "Hello, is anyone available?",
+      "outgoing_message_id": "mid.1458696618141:xyz987654",
+      "error": null
+    }
+  ]
+}
+```
+

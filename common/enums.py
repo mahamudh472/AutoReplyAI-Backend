@@ -10,3 +10,9 @@ class PlatformChoice(models.TextChoices):
     INSTAGRAM = "INSTAGRAM", "Instagram"
     WHATSAPP_BUSINESS = "WHATSAPP_BUSINESS", "WhatsApp Business"
 
+class OrganizationRoleChoice(models.TextChoices):
+    OWNER = "OWNER", "Owner"
+    ADMIN = "ADMIN", "Admin"
+    MEMBER = "MEMBER", "Member"
+
+

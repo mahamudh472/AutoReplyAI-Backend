@@ -25,6 +25,23 @@ This index lists available API endpoints and links to the per-app reference page
 - [DELETE /api/v1/integrations/<uuid:id>/](endpoints/integrations.md) — Delete an integration connection (authenticated)
 - [POST /api/v1/integrations/<uuid:id>/send-message/](endpoints/integrations.md) — Send a message on behalf of the integration (authenticated)
 - [GET /api/v1/integrations/logs/](endpoints/integrations.md) — View message dispatch history logs (authenticated)
+- [GET /api/v1/integrations/meta/connect/](endpoints/integrations.md) — Generate Meta OAuth URL (authenticated)
+- [GET /api/v1/integrations/meta/callback/](endpoints/integrations.md) — Meta OAuth callback handler (public)
+- [GET /api/v1/integrations/meta/pages/](endpoints/integrations.md) — Fetch user managed Facebook Pages (authenticated)
+- [POST /api/v1/integrations/meta/select-page/](endpoints/integrations.md) — Select and connect a Facebook Page integration (authenticated)
+- [GET /api/v1/integrations/meta/webhook/](endpoints/integrations.md) — Meta Webhook challenge verification (public)
+- [POST /api/v1/integrations/meta/webhook/](endpoints/integrations.md) — Meta Webhook event receiver & auto-responder (public)
+
+### Organizations
+
+- [GET /api/v1/organizations/](endpoints/organizations.md) — List organizations the user belongs to (authenticated)
+- [POST /api/v1/organizations/](endpoints/organizations.md) — Create a new organization (authenticated)
+- [GET /api/v1/organizations/current/](endpoints/organizations.md) — Get user's primary active organization (authenticated)
+- [GET /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Get organization details (authenticated)
+- [PATCH /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Update organization (authenticated)
+- [DELETE /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Delete organization (authenticated)
+- [GET /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — List organization members (authenticated)
+- [POST /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — Add organization member (authenticated)
 
 ---
 

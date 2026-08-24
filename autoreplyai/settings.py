@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'apps.accounts',
+    'apps.organizations',
     'apps.integrations',
 
     'rest_framework',
@@ -201,11 +202,13 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
-# Meta OAuth Settings
+# Meta OAuth & Webhook Settings
 META_CLIENT_ID = os.getenv("META_CLIENT_ID", "")
 META_CLIENT_SECRET = os.getenv("META_CLIENT_SECRET", "")
 META_REDIRECT_URI = os.getenv("META_REDIRECT_URI", "")
 META_FRONTEND_REDIRECT_URL = os.getenv("META_FRONTEND_REDIRECT_URL", "")
+META_WEBHOOK_VERIFY_TOKEN = os.getenv("META_WEBHOOK_VERIFY_TOKEN", "")
+META_DEFAULT_STATIC_REPLY = os.getenv("META_DEFAULT_STATIC_REPLY", "Hello! Thank you for reaching out. We have received your message and will get back to you soon.")
 
 # unfold config (modify the configs/unfold_conf.py file config for this project then uncomment the next line)
 # from .configs.unfold_conf import UNFOLD

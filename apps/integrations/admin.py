@@ -25,7 +25,7 @@ class IntegrationAdmin(ModelAdmin):
 class MessageLogAdmin(ModelAdmin):
     list_display = ("integration", "recipient_id", "status", "platform_message_id", "created_at")
     list_filter = ("status", "created_at", "integration__platform")
-    search_fields = ("recipient_id", "platform_message_id", "message_content", "integration__user__email")
+    search_fields = ("recipient_id", "platform_message_id", "message_content")
     ordering = ("-created_at",)
     readonly_fields = ("created_at",)
     fieldsets = (

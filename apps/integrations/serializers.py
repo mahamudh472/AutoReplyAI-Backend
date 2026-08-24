@@ -1,12 +1,18 @@
 from rest_framework import serializers
 from .models import Integration, MessageLog
 from typing import Dict, Any
+from apps.organizations.services import get_user_organization
 
 class IntegrationSerializer(serializers.ModelSerializer):
+    organization_id = serializers.UUIDField(source="organization.id", read_only=True)
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+
     class Meta:
         model = Integration
         fields = (
             "id",
+            "organization_id",
+            "organization_name",
             "platform",
             "name",
             "access_token",
@@ -16,7 +22,7 @@ class IntegrationSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at"
         )
-        read_only_fields = ("id", "created_at", "updated_at")
+        read_only_fields = ("id", "organization_id", "organization_name", "created_at", "updated_at")
         extra_kwargs = {
             "access_token": {"write_only": True}  # Security principle: do not return tokens in responses
         }
@@ -27,8 +33,10 @@ class IntegrationSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data: Dict[str, Any]) -> Integration:
-        # User is injected from the view during save()
-        validated_data["user"] = self.context["request"].user
+        user = self.context["request"].user
+        validated_data["user"] = user
+        if "organization" not in validated_data:
+            validated_data["organization"] = get_user_organization(user)
         return super().create(validated_data)
 
 

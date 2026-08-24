@@ -7,13 +7,24 @@ from common.enums import PlatformChoice
 class Integration(models.Model):
     """
     Saves connections to various platforms (Facebook Pages, Instagram, WhatsApp Business)
-    and their authentication tokens and unique identifiers.
+    and their authentication tokens and unique identifiers under an Organization.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="integrations",
+        help_text="The organization this integration belongs to"
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="integrations"
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="integrations",
+        help_text="The user who created/connected this integration"
     )
     platform = models.CharField(
         max_length=50,
@@ -50,7 +61,7 @@ class Integration(models.Model):
         app_label = "integrations"
         verbose_name = "Integration"
         verbose_name_plural = "Integrations"
-        unique_together = ("user", "platform", "platform_identifier")
+        unique_together = ("organization", "platform", "platform_identifier")
 
     def get_platform_display(self) -> str:
         """
@@ -61,7 +72,8 @@ class Integration(models.Model):
     def __str__(self) -> str:
         platform_label = self.get_platform_display()
         display_name = self.name or self.platform_identifier
-        return f"{self.user.email} - {platform_label} ({display_name})"
+        return f"{self.organization.name} - {platform_label} ({display_name})"
+
 
 
 class MessageLog(models.Model):
