@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.organizations',
     'apps.integrations',
+    'apps.ai',
 
     'rest_framework',
     'rest_framework_simplejwt',

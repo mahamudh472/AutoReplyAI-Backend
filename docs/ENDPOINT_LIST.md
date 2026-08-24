@@ -43,6 +43,12 @@ This index lists available API endpoints and links to the per-app reference page
 - [GET /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — List organization members (authenticated)
 - [POST /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — Add organization member (authenticated)
 
+### AI Settings
+
+- [GET /api/v1/ai/settings/](endpoints/ai.md) — Get AI configuration for the user's primary organization (authenticated)
+- [PATCH /api/v1/ai/settings/](endpoints/ai.md) — Update AI configuration for the user's primary organization (authenticated)
+- [PUT /api/v1/ai/settings/](endpoints/ai.md) — Replace AI configuration for the user's primary organization (authenticated)
+
 ---
 
 Add other apps here as their endpoint pages are created under `docs/endpoints/`.
