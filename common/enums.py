@@ -15,4 +15,17 @@ class OrganizationRoleChoice(models.TextChoices):
     ADMIN = "ADMIN", "Admin"
     MEMBER = "MEMBER", "Member"
 
+class KnowledgeDocumentStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    PROCESSING = "processing", "Processing"
+    INDEXED = "indexed", "Indexed"
+    FAILED = "failed", "Failed"
+
+class KnowledgeSourceType(models.TextChoices):
+    FILE = "file", "File Upload"
+    TEXT = "text", "Raw Text"
+    FAQ = "faq", "FAQ"
+    URL = "url", "Web Page URL"
+
+
 

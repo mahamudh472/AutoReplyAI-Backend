@@ -65,3 +65,107 @@ Request JSON (example):
 ```
 
 Success response (200): Returns the updated AI settings object.
+
+---
+
+## GET /api/v1/ai/knowledge-base/
+
+Description: List all Knowledge Base documents for the user's organization with filtering support.
+
+Auth: Required (Bearer access token)
+
+Query Parameters:
+- `status`: Filter by document status (`pending`, `processing`, `indexed`, `failed`)
+- `source_type`: Filter by source type (`file`, `text`, `faq`, `url`)
+- `is_active`: Filter by boolean (`true`/`false`)
+- `tag`: Filter by tag match
+- `search`: Full text search across title, description, filename, and content
+
+Success response (200):
+
+```json
+[
+  {
+    "id": "7a8b9c0d-1e2f-3456-7890-abcdef123456",
+    "organization_id": "e4b3c2a1-0987-6543-21fe-dcba09876543",
+    "organization_name": "Acme Corp's Organization",
+    "title": "Return Policy FAQ",
+    "description": "FAQ regarding refunds and returns",
+    "file": "/media/knowledge_base/2026/08/faq_policy.txt",
+    "file_url": "http://localhost:8000/media/knowledge_base/2026/08/faq_policy.txt",
+    "file_name": "faq_policy.txt",
+    "file_type": "txt",
+    "file_size": 1024,
+    "source_type": "file",
+    "raw_content": "Welcome to AutoReplyAI support. Our return policy is 30 days.",
+    "status": "pending",
+    "error_message": null,
+    "character_count": 59,
+    "word_count": 10,
+    "chunk_count": 0,
+    "tags": ["faq", "refunds"],
+    "metadata": {
+      "category": "policies",
+      "version": "1.0"
+    },
+    "is_active": true,
+    "created_by_email": "alice@example.com",
+    "created_at": "2026-08-28T12:00:00Z",
+    "updated_at": "2026-08-28T12:00:00Z",
+    "indexed_at": null
+  }
+]
+```
+
+---
+
+## POST /api/v1/ai/knowledge-base/upload/ (or /api/v1/ai/knowledge-base/)
+
+Description: Upload a text-related file (`.txt`, `.md`, `.csv`, `.json`, etc.) or raw text content to be stored in the Knowledge Base and indexed later.
+
+Auth: Required (Bearer access token)
+
+Content-Type: `multipart/form-data` or `application/json`
+
+Form Fields / JSON Payload:
+- `file`: The document file to upload (optional if `raw_content` is provided)
+- `title`: Title of the document (optional, defaults to filename)
+- `description`: Summary of document content (optional)
+- `raw_content`: Direct text input if not uploading a file (optional if `file` is uploaded)
+- `source_type`: `file`, `text`, `faq`, or `url` (default: `file`)
+- `tags`: List of string tags or JSON string (e.g. `["support", "refunds"]`)
+- `metadata`: JSON object containing arbitrary metadata (e.g. `{"category": "shipping"}`)
+- `is_active`: Boolean flag (default: `true`)
+
+Success response (201): Returns the created `KnowledgeDocument` object with status `pending`.
+
+---
+
+## GET /api/v1/ai/knowledge-base/<uuid:id>/
+
+Description: Retrieve details of a specific Knowledge Base document.
+
+Auth: Required (Bearer access token)
+
+Success response (200): Returns single `KnowledgeDocument` object.
+
+---
+
+## PATCH /api/v1/ai/knowledge-base/<uuid:id>/
+
+Description: Update document metadata, title, tags, or active status.
+
+Auth: Required (Bearer access token)
+
+Success response (200): Returns updated `KnowledgeDocument` object.
+
+---
+
+## DELETE /api/v1/ai/knowledge-base/<uuid:id>/
+
+Description: Delete a knowledge document and its associated file and chunks.
+
+Auth: Required (Bearer access token)
+
+Success response (204 No Content)
+

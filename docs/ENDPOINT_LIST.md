@@ -43,11 +43,16 @@ This index lists available API endpoints and links to the per-app reference page
 - [GET /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — List organization members (authenticated)
 - [POST /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — Add organization member (authenticated)
 
-### AI Settings
+### AI & Knowledge Base
 
 - [GET /api/v1/ai/settings/](endpoints/ai.md) — Get AI configuration for the user's primary organization (authenticated)
 - [PATCH /api/v1/ai/settings/](endpoints/ai.md) — Update AI configuration for the user's primary organization (authenticated)
 - [PUT /api/v1/ai/settings/](endpoints/ai.md) — Replace AI configuration for the user's primary organization (authenticated)
+- [GET /api/v1/ai/knowledge-base/](endpoints/ai.md) — List Knowledge Base documents with filter options (authenticated)
+- [POST /api/v1/ai/knowledge-base/upload/](endpoints/ai.md) — Upload text-related files or raw text for future indexing (authenticated)
+- [GET /api/v1/ai/knowledge-base/<uuid:id>/](endpoints/ai.md) — Get Knowledge Base document details (authenticated)
+- [PATCH /api/v1/ai/knowledge-base/<uuid:id>/](endpoints/ai.md) — Update Knowledge Base document (authenticated)
+- [DELETE /api/v1/ai/knowledge-base/<uuid:id>/](endpoints/ai.md) — Delete Knowledge Base document (authenticated)
 
 ---
 
