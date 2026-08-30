@@ -39,7 +39,10 @@ This index lists available API endpoints and links to the per-app reference page
 - [GET /api/v1/organizations/current/](endpoints/organizations.md) — Get user's primary active organization (authenticated)
 - [GET /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Get organization details (authenticated)
 - [PATCH /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Update organization (authenticated)
-- [DELETE /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Delete organization (authenticated)
+- [POST /api/v1/organizations/<uuid:id>/logo/](endpoints/organizations.md) — Upload / update organization logo (authenticated)
+- [DELETE /api/v1/organizations/<uuid:id>/logo/](endpoints/organizations.md) — Remove organization logo (authenticated)
+- [GET /api/v1/organizations/<uuid:id>/subscription/](endpoints/organizations.md) — Get organization subscription plan & usage quotas (authenticated)
+- [DELETE /api/v1/organizations/<uuid:id>/](endpoints/organizations.md) — Permanently delete organization (authenticated)
 - [GET /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — List organization members (authenticated)
 - [POST /api/v1/organizations/<uuid:org_id>/members/](endpoints/organizations.md) — Add organization member (authenticated)
 

@@ -1,7 +1,9 @@
 from typing import Tuple, Optional
+from datetime import timedelta
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from common.enums import OrganizationRoleChoice
-from .models import Organization, OrganizationMember
+from .models import Organization, OrganizationMember, OrganizationSubscription
 
 User = get_user_model()
 
@@ -9,7 +11,7 @@ User = get_user_model()
 def create_default_organization_for_user(user: User) -> Tuple[Organization, OrganizationMember]:
     """
     Creates a default organization for the user if they do not already own one,
-    and adds an OrganizationMember entry with the OWNER role.
+    adds an OrganizationMember entry with the OWNER role, and initializes the starter subscription.
     """
     existing_membership = OrganizationMember.objects.filter(
         user=user,
@@ -17,6 +19,18 @@ def create_default_organization_for_user(user: User) -> Tuple[Organization, Orga
     ).select_related("organization").first()
 
     if existing_membership:
+        OrganizationSubscription.objects.get_or_create(
+            organization=existing_membership.organization,
+            defaults={
+                "plan_name": "Starter Plan",
+                "status": "active",
+                "billing_cycle": "monthly",
+                "max_messages": 10000,
+                "max_team_members": 1,
+                "max_connected_accounts": 1,
+                "renews_at": timezone.now() + timedelta(days=30),
+            }
+        )
         return existing_membership.organization, existing_membership
 
     # Check if user already owns an organization without membership
@@ -26,6 +40,18 @@ def create_default_organization_for_user(user: User) -> Tuple[Organization, Orga
             organization=existing_org,
             user=user,
             defaults={"role": OrganizationRoleChoice.OWNER}
+        )
+        OrganizationSubscription.objects.get_or_create(
+            organization=existing_org,
+            defaults={
+                "plan_name": "Starter Plan",
+                "status": "active",
+                "billing_cycle": "monthly",
+                "max_messages": 10000,
+                "max_team_members": 1,
+                "max_connected_accounts": 1,
+                "renews_at": timezone.now() + timedelta(days=30),
+            }
         )
         return existing_org, member
 
@@ -41,6 +67,16 @@ def create_default_organization_for_user(user: User) -> Tuple[Organization, Orga
         organization=organization,
         user=user,
         role=OrganizationRoleChoice.OWNER
+    )
+    OrganizationSubscription.objects.create(
+        organization=organization,
+        plan_name="Starter Plan",
+        status="active",
+        billing_cycle="monthly",
+        max_messages=10000,
+        max_team_members=1,
+        max_connected_accounts=1,
+        renews_at=timezone.now() + timedelta(days=30),
     )
     return organization, member
 
